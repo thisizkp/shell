@@ -8,11 +8,18 @@ fn main() {
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
 
-        let input = input.trim();
-        if input == "exit" {
-            break;
+        let parts: Vec<&str> = input.trim().split_whitespace().collect();
+        match parts.as_slice() {
+            ["echo", rest @ ..] => {
+                println!("{}", rest.join(" "));
+            }
+            ["exit", ..] => {
+                break;
+            }
+            [cmd, ..] => {
+                println!("{}: command not found", cmd);
+            }
+            [] => {}
         }
-
-        println!("{}: command not found", input);
     }
 }
