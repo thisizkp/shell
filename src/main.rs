@@ -1,5 +1,7 @@
 use std::io::{self, Write};
 
+const SUPPORTED_COMMANDS: [&str; 3] = ["type", "echo", "exit"];
+
 fn main() {
     loop {
         print!("$ ");
@@ -10,6 +12,14 @@ fn main() {
 
         let parts: Vec<&str> = input.trim().split_whitespace().collect();
         match parts.as_slice() {
+            ["type", cmd, ..] => {
+                if SUPPORTED_COMMANDS.contains(cmd) {
+                    println!("{} is a shell builtin", cmd);
+                } else {
+                    println!("{}: not found", cmd);
+                }
+            }
+
             ["echo", rest @ ..] => {
                 println!("{}", rest.join(" "));
             }
