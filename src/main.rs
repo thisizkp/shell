@@ -1,6 +1,11 @@
+use std::env;
+use std::fs;
 use std::io::{self, Write};
+use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
+use std::path::PathBuf;
 
-const SUPPORTED_COMMANDS: [&str; 3] = ["type", "echo", "exit"];
+const BUILTIN_COMMANDS: [&str; 3] = ["type", "echo", "exit"];
 
 fn main() {
     loop {
@@ -13,10 +18,14 @@ fn main() {
         let parts: Vec<&str> = input.trim().split_whitespace().collect();
         match parts.as_slice() {
             ["type", cmd, ..] => {
-                if SUPPORTED_COMMANDS.contains(cmd) {
+                if BUILTIN_COMMANDS.contains(cmd) {
                     println!("{} is a shell builtin", cmd);
                 } else {
-                    println!("{}: not found", cmd);
+                    if let Some(path) = find_cmd(&cmd) {
+                        println!("{} is {}", cmd, path.display());
+                    } else {
+                        println!("{}: not found", cmd);
+                    }
                 }
             }
 
@@ -32,4 +41,21 @@ fn main() {
             [] => {}
         }
     }
+}
+
+fn find_cmd(cmd: &str) -> Option<PathBuf> {
+    let path = env::var("PATH").unwrap();
+    for dir in path.split(":") {
+        let path = Path::new(dir).join(cmd);
+        if path.exists() {
+            let is_exec = fs::metadata(&path)
+                .map(|m| m.permissions().mode() & 0o111 != 0)
+                .unwrap_or(false);
+
+            if is_exec {
+                return Some(path);
+            }
+        }
+    }
+    return None;
 }
